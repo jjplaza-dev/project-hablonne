@@ -1,25 +1,57 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useCartStore } from '../store/cartStore'; // Adjust path based on your folder structure
+import { useCartStore } from '../store/cartStore'; 
+import { Plus } from 'lucide-react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+// Register the ScrollTrigger plugin
+gsap.registerPlugin(ScrollTrigger);
 
 const ProductCard = ({ item }) => {
+  const cardRef = useRef(null);
   const imageUrl = `https://peru-alpaca-102666.hostingersite.com/items-images/${item.id}.jpg`;
   
-  // Zustand Cart Action
   const addToCart = useCartStore((state) => state.addToCart);
   
-  // Local state for the quick-add size selection
   const [selectedSize, setSelectedSize] = useState('');
   const sizes = ['XS', 'S', 'M', 'L'];
 
-  // Handle Size Click (prevents link navigation)
+  // GSAP Animation setup
+  useEffect(() => {
+    // gsap.context ensures smooth cleanup of animations when components unmount
+    let ctx = gsap.context(() => {
+      gsap.fromTo(
+        cardRef.current,
+        { 
+          opacity: 0, 
+          y: 40 // Start slightly lower
+        },
+        {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: cardRef.current,
+            // 'top 70%' means: when the TOP of the card hits 70% down the viewport 
+            // (which is exactly 30% from the bottom of the screen)
+            start: 'top 70%', 
+            toggleActions: 'play none none none' // Play only once
+          },
+        }
+      );
+    }, cardRef);
+
+    return () => ctx.revert(); // Cleanup on unmount
+  }, []);
+
   const handleSizeClick = (e, size) => {
     e.preventDefault(); 
     e.stopPropagation();
     setSelectedSize(size);
   };
 
-  // Handle Add to Cart Click (prevents link navigation)
   const handleAddClick = (e) => {
     e.preventDefault(); 
     e.stopPropagation();
@@ -30,17 +62,18 @@ const ProductCard = ({ item }) => {
     }
 
     addToCart(item, selectedSize, 1);
-    
-    // Reset selection after adding to give a subtle visual cue that action completed
     setSelectedSize('');
-    // Optional: You could replace the alert with a toast notification later
     alert('Added to bag!'); 
   };
 
   return (
-    <div className="group flex flex-col border border-black rounded-md overflow-hidden bg-white relative">
+   
+    <div 
+      ref={cardRef} 
+      className="group flex flex-col border border-black/25 rounded-md overflow-hidden bg-white relative opacity-0"
+    >
       
-      {/* Upper Half: Image & Hover Overlay wrapped in a Link */}
+    
       <Link to={`/shop/${item.id}`} className="relative w-full aspect-[2/3] md:aspect-[1/1.25] overflow-hidden bg-white block">
         <img 
           src={imageUrl} 
@@ -49,14 +82,13 @@ const ProductCard = ({ item }) => {
           loading="lazy"
         />
         
-        {/* Sliding Blur Overlay */}
+   
         <div 
-          // Adding a click handler here stops clicking on the empty space of the overlay from triggering the link
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
           className="absolute bottom-0 left-0 w-full flex justify-between items-center p-3 bg-white/40 backdrop-blur-md border-t border-black translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out z-10 cursor-default"
         >
           
-          {/* Sizes Left Side (Radio Behavior) */}
+   
           <div className="flex gap-1 text-xs font-semibold text-black tracking-widest">
             {sizes.map((size) => (
               <button
@@ -73,19 +105,23 @@ const ProductCard = ({ item }) => {
             ))}
           </div>
 
-          {/* Add Button Right Side */}
+         
           <button 
             onClick={handleAddClick}
-            className="flex items-center gap-1 px-3 py-1.5 bg-black text-white text-xs font-medium uppercase tracking-wider rounded-sm hover:bg-neutral-800 transition-colors"
+            
+            className="group/add flex items-center gap-2 px-3 py-1.5 bg-black text-white text-xs font-medium uppercase tracking-wider rounded-sm hover:bg-neutral-800 transition-colors"
           >
             <span>Add</span>
-            <span className="text-base leading-none mb-[1px]">+</span>
+           
+            <div className="flex items-center justify-center w-[18px] h-[18px] rounded-full border border-white transition-transform duration-300 group-hover/add:rotate-90">
+              <Plus size={12} strokeWidth={1.5} />
+            </div>
           </button>
 
         </div>
       </Link>
 
-      {/* Lower Half: Product Info wrapped in a Link */}
+   
       <Link 
         to={`/shop/${item.id}`} 
         className="flex justify-between items-center p-4 border-t border-black bg-white text-black hover:bg-neutral-50 transition-colors"
