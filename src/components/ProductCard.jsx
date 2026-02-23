@@ -17,15 +17,13 @@ const ProductCard = ({ item }) => {
   const [selectedSize, setSelectedSize] = useState('');
   const sizes = ['XS', 'S', 'M', 'L'];
 
-  // GSAP Animation setup
   useEffect(() => {
-    // gsap.context ensures smooth cleanup of animations when components unmount
     let ctx = gsap.context(() => {
       gsap.fromTo(
         cardRef.current,
         { 
           opacity: 0, 
-          y: 40 // Start slightly lower
+          y: 40
         },
         {
           opacity: 1,
@@ -34,16 +32,14 @@ const ProductCard = ({ item }) => {
           ease: 'power2.out',
           scrollTrigger: {
             trigger: cardRef.current,
-            // 'top 70%' means: when the TOP of the card hits 70% down the viewport 
-            // (which is exactly 30% from the bottom of the screen)
             start: 'top 70%', 
-            toggleActions: 'play none none none' // Play only once
+            toggleActions: 'play none none none'
           },
         }
       );
     }, cardRef);
 
-    return () => ctx.revert(); // Cleanup on unmount
+    return () => ctx.revert();
   }, []);
 
   const handleSizeClick = (e, size) => {

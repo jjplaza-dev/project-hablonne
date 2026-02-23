@@ -2,32 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient'; 
 import ProductCard from '../components/ProductCard'; 
-import { X } from 'lucide-react';
+import { X, ChevronRight } from 'lucide-react';
 
 const ITEMS_PER_PAGE = 12;
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // React Router Hooks
-  const [searchParams] = useSearchParams();
+
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  
-  // Extract URL parameters
+
   const urlSubCategory = searchParams.get('subCategory');
   const urlSearchTerm = searchParams.get('search'); 
+  const urlSeason = searchParams.get('season'); 
+  const page = parseInt(searchParams.get('page') || '1', 10);
 
-  // Pagination State
-  const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
 
-  // Filter States
   const [selectedGenders, setSelectedGenders] = useState([]);
-  const [selectedSubCategories, setSelectedSubCategories] = useState([]); // Updated to handle specific sub-categories
+  const [selectedSubCategories, setSelectedSubCategories] = useState([]); 
+  const [selectedSeasons, setSelectedSeasons] = useState([]); 
 
-  // Filter Options
-  const genders = ['Men', 'Women', 'Others'];
+  const genders = ['Men', 'Women', 'Unisex'];
+  const seasons = ['Spring', 'Summer', 'Fall', 'Winter']; 
   
   const menuCategories = [
     { master: 'Apparel', subs: ['Topwear', 'Bottomwear', 'Innerwear'] },
@@ -45,23 +43,29 @@ const Shop = () => {
       query = query.ilike('productDisplayName', `%${urlSearchTerm}%`);
     }
 
-    // Combine local selected sub-categories with the URL parameter (if any)
     const activeSubCategories = [...selectedSubCategories];
     if (urlSubCategory && !activeSubCategories.includes(urlSubCategory)) {
       activeSubCategories.push(urlSubCategory);
     }
 
-    // Apply combined Sub-Category Filters
+    const activeSeasons = [...selectedSeasons];
+    if (urlSeason) {
+      const formattedSeason = urlSeason.charAt(0).toUpperCase() + urlSeason.slice(1);
+      if (!activeSeasons.includes(formattedSeason)) {
+        activeSeasons.push(formattedSeason);
+      }
+    }
+
     if (activeSubCategories.length > 0) {
       query = query.in('subCategory', activeSubCategories);
     }
-
-    // Apply Gender Filter
+    if (activeSeasons.length > 0) {
+      query = query.in('season', activeSeasons);
+    }
     if (selectedGenders.length > 0) {
       query = query.in('gender', selectedGenders);
     }
 
-    // Apply Pagination
     const from = (page - 1) * ITEMS_PER_PAGE;
     const to = from + ITEMS_PER_PAGE - 1;
     query = query.range(from, to);
@@ -80,8 +84,17 @@ const Shop = () => {
 
   useEffect(() => {
     fetchProducts();
-    setPage(1); 
-  }, [selectedGenders, selectedSubCategories, page, urlSubCategory, urlSearchTerm]);
+  }, [selectedGenders, selectedSubCategories, selectedSeasons, page, urlSubCategory, urlSearchTerm, urlSeason]);
+
+  const updateUrlPage = (newPage) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (newPage === 1) {
+      newParams.delete('page');
+    } else {
+      newParams.set('page', newPage);
+    }
+    setSearchParams(newParams);
+  };
 
   const toggleFilter = (setState, value) => {
     setState((prev) =>
@@ -89,48 +102,56 @@ const Shop = () => {
         ? prev.filter((item) => item !== value)
         : [...prev, value]
     );
-    setPage(1); 
+
+    updateUrlPage(1); 
   };
 
   const clearFilters = () => {
     setSelectedGenders([]);
     setSelectedSubCategories([]);
-    setPage(1);
-    
-    if (urlSubCategory || urlSearchTerm) {
-      navigate('/shop');
-    }
-  };
-
-  const handleClearUrlFilter = () => {
+    setSelectedSeasons([]);
     navigate('/shop');
   };
 
+  const handleClearUrlFilter = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('subCategory');
+    newParams.delete('search');
+    newParams.delete('season');
+    newParams.delete('page');
+    setSearchParams(newParams);
+  };
+
   const handlePageChange = (newPage) => {
-    setPage(newPage);
+    updateUrlPage(newPage);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const hasActiveFilters = selectedGenders.length > 0 || selectedSubCategories.length > 0 || urlSubCategory || urlSearchTerm;
+  const hasActiveFilters = 
+    selectedGenders.length > 0 || 
+    selectedSubCategories.length > 0 || 
+    selectedSeasons.length > 0 || 
+    urlSubCategory || 
+    urlSearchTerm || 
+    urlSeason;
+
   const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
 
   return (
-    <div className="w-full px-4 md:px-8 py-12 flex flex-col gap-8">
+    <div className="w-full px-4 md:px-8 py-12 flex flex-col gap-12">
       
-      {/* Top Filters Section */}
-      <aside className="w-full border-b border-black pb-8">
-        <div className="flex justify-between items-end mb-8">
+      <aside className="w-full border-b border-black pb-12">
+        <div className="flex justify-between items-end mb-10">
           <div className="flex flex-col gap-2">
             <h2 className="text-xl md:text-2xl font-bold uppercase tracking-widest">Filters</h2>
             
-            {/* Visual Indicator for URL Parameter Filters */}
-            {(urlSubCategory || urlSearchTerm) && (
+            {(urlSubCategory || urlSearchTerm || urlSeason) && (
               <div className="flex flex-wrap items-center gap-2 mt-2">
                 <span className="text-xs font-semibold uppercase tracking-widest text-neutral-500">
-                  {urlSearchTerm ? 'Search Results For:' : 'Viewing Category:'}
+                  {urlSearchTerm ? 'Search Results For:' : 'Viewing:'}
                 </span>
-                <span className="flex items-center gap-1 bg-neutral-100 border border-black px-2 py-1 text-xs font-bold uppercase tracking-widest rounded-sm">
-                  {urlSearchTerm || urlSubCategory}
+                <span className="flex items-center gap-1 border-b border-black pb-0.5 text-xs font-bold uppercase tracking-widest">
+                  {urlSeason ? urlSeason.charAt(0).toUpperCase() + urlSeason.slice(1) : (urlSearchTerm || urlSubCategory)}
                   <button onClick={handleClearUrlFilter} className="hover:text-red-500 transition-colors ml-1">
                     <X size={12} strokeWidth={2} />
                   </button>
@@ -142,78 +163,103 @@ const Shop = () => {
           {hasActiveFilters && (
             <button 
               onClick={clearFilters}
-              className="text-xs font-semibold uppercase tracking-widest hover:underline text-neutral-500 shrink-0"
+              className="text-xs font-semibold uppercase tracking-widest hover:text-neutral-500 transition-colors shrink-0 flex items-center gap-1"
             >
-              Clear All
+              Clear All <X size={14} strokeWidth={1.5} />
             </button>
           )}
         </div>
 
-        <div className="flex flex-col gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 md:gap-12">
           
-          {/* Gender Filter Section */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-widest mb-3">Gender</h3>
-            <div className="flex flex-wrap gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-neutral-400">Gender</h3>
+            <ul className="flex flex-col gap-3">
               {genders.map((gender) => {
                 const isActive = selectedGenders.includes(gender);
                 return (
-                  <button
-                    key={gender}
-                    onClick={() => toggleFilter(setSelectedGenders, gender)}
-                    className={`px-4 py-2 text-sm uppercase tracking-widest border border-black rounded-sm transition-colors ${
-                      isActive ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-100'
-                    }`}
-                  >
-                    {gender}
-                  </button>
+                  <li key={gender}>
+                    <button
+                      onClick={() => toggleFilter(setSelectedGenders, gender)}
+                      className={`text-xs uppercase tracking-widest transition-all flex items-center gap-2 group ${
+                        isActive ? 'font-bold text-black' : 'font-medium text-neutral-600 hover:text-black'
+                      }`}
+                    >
+                      <ChevronRight size={12} strokeWidth={2} className={`transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                      <span className={`${isActive ? '-translate-x-1' : ''} group-hover:translate-x-1 transition-transform`}>
+                        {gender}
+                      </span>
+                    </button>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </div>
-
-          {/* Master & Sub Category Filter Section */}
           <div>
-            <h3 className="text-sm font-semibold uppercase tracking-widest mb-4 border-b border-black pb-2">Categories</h3>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
-              {menuCategories.map((category) => (
-                <div key={category.master}>
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-3">
-                    {category.master}
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {category.subs.map((sub) => {
-                      // Check if it's active locally OR via the Navbar URL
-                      const isActive = selectedSubCategories.includes(sub) || urlSubCategory === sub;
-                      return (
-                        <button
-                          key={sub}
-                          onClick={() => {
-                            // If they click an active URL filter, clear the URL to "uncheck" it
-                            if (urlSubCategory === sub) {
-                              handleClearUrlFilter();
-                            } else {
-                              toggleFilter(setSelectedSubCategories, sub);
-                            }
-                          }}
-                          className={`px-3 py-1.5 text-xs uppercase tracking-widest border border-black rounded-sm transition-colors text-left ${
-                            isActive ? 'bg-black text-white' : 'bg-white text-black hover:bg-neutral-100'
-                          }`}
-                        >
-                          {sub}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-neutral-400">Season</h3>
+            <ul className="flex flex-col gap-3">
+              {seasons.map((season) => {
+                const isActive = selectedSeasons.includes(season) || (urlSeason && urlSeason.toLowerCase() === season.toLowerCase());
+                return (
+                  <li key={season}>
+                    <button
+                      onClick={() => {
+                        if (urlSeason && urlSeason.toLowerCase() === season.toLowerCase()) {
+                          handleClearUrlFilter();
+                        } else {
+                          toggleFilter(setSelectedSeasons, season);
+                        }
+                      }}
+                      className={`text-xs uppercase tracking-widest transition-all flex items-center gap-2 group ${
+                        isActive ? 'font-bold text-black' : 'font-medium text-neutral-600 hover:text-black'
+                      }`}
+                    >
+                      <ChevronRight size={12} strokeWidth={2} className={`transition-opacity ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                      <span className={`${isActive ? '-translate-x-1' : ''} group-hover:translate-x-1 transition-transform`}>
+                        {season}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
+          {menuCategories.map((category) => (
+            <div key={category.master}>
+              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-neutral-400">
+                {category.master}
+              </h3>
+              <ul className="flex flex-col gap-3">
+                {category.subs.map((sub) => {
+                  const isActive = selectedSubCategories.includes(sub) || urlSubCategory === sub;
+                  return (
+                    <li key={sub}>
+                      <button
+                        onClick={() => {
+                          if (urlSubCategory === sub) {
+                            handleClearUrlFilter();
+                          } else {
+                            toggleFilter(setSelectedSubCategories, sub);
+                          }
+                        }}
+                        className={`text-xs uppercase tracking-widest transition-all flex items-center gap-2 group text-left ${
+                          isActive ? 'font-bold text-black' : 'font-medium text-neutral-600 hover:text-black'
+                        }`}
+                      >
+                        <ChevronRight size={12} strokeWidth={2} className={`transition-opacity shrink-0 ${isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`} />
+                        <span className={`${isActive ? '-translate-x-1' : ''} group-hover:translate-x-1 transition-transform`}>
+                          {sub}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
 
         </div>
       </aside>
-
-      {/* Product Grid Area */}
       <div className="w-full">
         <div className="mb-6 flex items-center h-[34px]">
           <span className="text-sm font-medium uppercase tracking-widest">
@@ -221,7 +267,6 @@ const Shop = () => {
           </span>
         </div>
 
-        {/* The Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 md:gap-10 min-h-[50vh]">
           {loading ? (
             [...Array(ITEMS_PER_PAGE)].map((_, i) => (
@@ -237,8 +282,6 @@ const Shop = () => {
             </div>
           )}
         </div>
-
-        {/* Pagination Controls */}
         {totalPages > 1 && (
           <div className="mt-16 pt-8 border-t border-black flex justify-center items-center gap-6">
             <button 

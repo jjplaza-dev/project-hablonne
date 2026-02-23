@@ -23,43 +23,30 @@ const Navbar = () => {
     setIsCartOpen(false);
   };
 
-  // Handle search submission
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Navigate to shop with the search query in the URL
       navigate(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(''); // clear input
-      closeAllDrawers(); // close mobile menu if open
+      setSearchQuery(''); 
+      closeAllDrawers(); 
     }
   };
 
-  // Structured Menu Data
+  // Expanded Mega-Menu Data
+  const genders = ['Men', 'Women', 'Unisex']; // Using 'Unisex' assuming it maps to 'Others' or similar in your DB
+  const seasons = ['Spring', 'Summer', 'Fall', 'Winter'];
   const menuCategories = [
-    {
-      master: 'Apparel',
-      subs: ['Topwear', 'Bottomwear', 'Innerwear']
-    },
-    {
-      master: 'Accessories',
-      subs: ['Watches', 'Belts', 'Handbags']
-    },
-    {
-      master: 'Footwear',
-      subs: ['Shoes', 'Flip Flops', 'Sandals']
-    },
-    {
-      master: 'Personal Care',
-      subs: ['Lipstick', 'Deodorant']
-    }
+    { master: 'Apparel', subs: ['Topwear', 'Bottomwear', 'Innerwear'] },
+    { master: 'Accessories', subs: ['Watches', 'Belts', 'Handbags'] },
+    { master: 'Footwear', subs: ['Shoes', 'Flip Flops', 'Sandals'] },
+    { master: 'Personal Care', subs: ['Lipstick', 'Deodorant'] }
   ];
 
   return (
     <>
       <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-black text-black">
         <div className="grid grid-cols-3 items-center px-4 md:px-8 h-16 w-full">
-          
-          {/* Left Section: Shop Button & Desktop Search */}
+
           <div className="flex items-center gap-4 md:gap-6">
             <button 
               onClick={() => setIsSidebarOpen(true)}
@@ -69,7 +56,6 @@ const Navbar = () => {
               <span className="hidden sm:inline">Shop</span>
             </button>
 
-            {/* Desktop Search Form */}
             <form 
               onSubmit={handleSearch}
               className="hidden lg:flex items-center border border-black rounded-sm h-8 w-48 bg-white transition-colors focus-within:border-neutral-500 px-2 gap-2"
@@ -87,7 +73,6 @@ const Navbar = () => {
             </form>
           </div>
 
-          {/* Center Section: Logo */}
           <div className="flex justify-center">
             <Link 
               to="/" 
@@ -98,7 +83,6 @@ const Navbar = () => {
             </Link>
           </div>
 
-          {/* Right Section: Cart */}
           <div className="flex justify-end">
             <button 
               onClick={() => setIsCartOpen(true)}
@@ -119,7 +103,6 @@ const Navbar = () => {
         </div>
       </header>
 
-      {/* --- Shared Blur Backdrop Overlay --- */}
       <div 
         onClick={closeAllDrawers}
         className={`fixed inset-0 bg-black/10 backdrop-blur-sm z-50 transition-opacity duration-300 ${
@@ -127,7 +110,6 @@ const Navbar = () => {
         }`}
       ></div>
 
-      {/* --- LEFT SIDEBAR: Shop Menu --- */}
       <aside 
         className={`fixed top-0 left-0 h-screen w-[85vw] sm:w-80 bg-white border-r border-black z-50 flex flex-col transform transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
@@ -147,7 +129,7 @@ const Navbar = () => {
         </div>
 
         <div className="p-4 flex-1 overflow-y-auto">
-          {/* Mobile Search Form */}
+
           <form 
             onSubmit={handleSearch}
             className="lg:hidden flex items-center border border-black rounded-sm h-10 w-full mb-8 px-3 gap-2"
@@ -164,11 +146,55 @@ const Navbar = () => {
             />
           </form>
 
-          {/* Dynamic Category List */}
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 pb-12">
+            
+            <Link 
+              to="/shop" 
+              onClick={closeAllDrawers}
+              className="text-sm font-bold uppercase tracking-widest border-b border-black pb-2 hover:text-neutral-500 transition-colors w-fit"
+            >
+              View All Products
+            </Link>
+
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-neutral-400">Shop by Gender</h3>
+              <ul className="flex flex-col gap-3 pl-2">
+                {genders.map((gender) => (
+                  <li key={gender}>
+                    <Link 
+                      to={`/shop?gender=${gender}`} 
+                      onClick={closeAllDrawers}
+                      className="group flex items-center gap-2 text-xs uppercase tracking-widest text-neutral-600 hover:text-black transition-colors"
+                    >
+                      <ChevronRight size={14} strokeWidth={1.5} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                      <span className="group-hover:translate-x-1 transition-transform">{gender}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-neutral-400">Collections</h3>
+              <ul className="flex flex-col gap-3 pl-2">
+                {seasons.map((season) => (
+                  <li key={season}>
+                    <Link 
+                      to={`/shop?season=${season}`} 
+                      onClick={closeAllDrawers}
+                      className="group flex items-center gap-2 text-xs uppercase tracking-widest text-neutral-600 hover:text-black transition-colors"
+                    >
+                      <ChevronRight size={14} strokeWidth={1.5} className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                      <span className="group-hover:translate-x-1 transition-transform">{season}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
             {menuCategories.map((category) => (
               <div key={category.master}>
-                <h3 className="text-sm font-bold uppercase tracking-widest mb-4 border-b border-neutral-200 pb-2">
+                <h3 className="text-xs font-bold uppercase tracking-widest mb-4 text-neutral-400">
                   {category.master}
                 </h3>
                 <ul className="flex flex-col gap-3 pl-2">
@@ -188,10 +214,10 @@ const Navbar = () => {
               </div>
             ))}
           </div>
+
         </div>
       </aside>
 
-      {/* --- RIGHT SIDEBAR: Cart Drawer --- */}
       <aside 
         className={`fixed top-0 right-0 h-screen w-[85vw] sm:w-[400px] bg-white border-l border-black z-50 flex flex-col transform transition-transform duration-300 ease-in-out ${
           isCartOpen ? 'translate-x-0' : 'translate-x-full'
@@ -210,14 +236,13 @@ const Navbar = () => {
           </button>
         </div>
 
-        {/* Cart Items Area */}
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
           {cart.length === 0 ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 text-neutral-500">
               <ShoppingBag size={48} strokeWidth={1} className="mb-2 opacity-50" />
               <p className="text-sm uppercase tracking-widest font-medium">Your bag is empty.</p>
               <button 
-                onClick={() => { setIsCartOpen(false); }}
+                onClick={() => { setIsCartOpen(false); navigate('/shop'); }}
                 className="text-xs uppercase tracking-widest border-b border-black text-black hover:text-neutral-500 transition-colors pb-1"
               >
                 Continue Shopping
@@ -227,7 +252,6 @@ const Navbar = () => {
             cart.map((item) => (
               <div key={item.cartItemId} className="flex gap-4 border border-black p-2 rounded-sm relative group">
                 
-                {/* Product Image wrapped in a Link */}
                 <Link 
                   to={`/shop/${item.id}`} 
                   onClick={() => setIsCartOpen(false)}
@@ -240,7 +264,6 @@ const Navbar = () => {
                   />
                 </Link>
 
-                {/* Product Details & Controls */}
                 <div className="flex flex-col flex-1 justify-between py-1">
                   <div>
                     <h4 className="text-sm font-semibold uppercase tracking-tight line-clamp-1 pr-6">
@@ -267,7 +290,6 @@ const Navbar = () => {
                   </div>
                 </div>
 
-                {/* Remove Item Button */}
                 <button 
                   onClick={() => removeFromCart(item.cartItemId)}
                   className="absolute top-2 right-2 p-1 text-neutral-400 hover:text-black hover:bg-neutral-100 rounded-sm transition-colors"
@@ -280,7 +302,6 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Order Summary Area */}
         {cart.length > 0 && (
           <div className="shrink-0 border-t border-black bg-white p-4 flex flex-col gap-4">
             <div className="flex flex-col gap-2 text-sm uppercase tracking-widest font-medium">

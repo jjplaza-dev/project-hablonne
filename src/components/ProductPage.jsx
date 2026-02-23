@@ -1,18 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient'; // Adjust path if necessary
+import { supabase } from '../lib/supabaseClient';
 import { useCartStore } from '../store/cartStore';
 
 const ProductPage = () => {
-  const { id } = useParams(); // Get the item ID from the URL
+  const { id } = useParams();
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   
-  // Cart Selections
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
 
-  // Hardcoded sizes for now (you can adjust if sizes are added to DB later)
   const sizes = ['XS', 'S', 'M', 'L', 'XL'];
 
   useEffect(() => {
@@ -22,7 +20,7 @@ const ProductPage = () => {
         .from('shop')
         .select('*')
         .eq('id', id)
-        .single(); // .single() ensures we get an object, not an array
+        .single();
 
       if (error) {
         console.error('Error fetching product:', error);
@@ -74,8 +72,7 @@ const handleAddToCart = () => {
 
   return (
     <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 py-8 md:py-16">
-      
-      {/* Breadcrumbs */}
+
       <nav className="text-xs font-medium uppercase tracking-widest text-neutral-500 mb-8">
         <Link to="/shop" className="hover:text-black transition-colors">Shop</Link>
         <span className="mx-2">/</span>
@@ -84,10 +81,8 @@ const handleAddToCart = () => {
         <span className="text-black">{item.productDisplayName}</span>
       </nav>
 
-      {/* Main Layout: Image Left, Details Right */}
       <div className="flex flex-col md:flex-row gap-8 lg:gap-16 items-start">
-        
-        {/* Left Column: Image */}
+ 
         <div className="w-full md:w-1/2 lg:w-3/5 border border-black rounded-md overflow-hidden bg-white aspect-[3/4] md:aspect-auto md:h-[80vh] sticky top-8">
           <img 
             src={imageUrl} 
@@ -96,10 +91,8 @@ const handleAddToCart = () => {
           />
         </div>
 
-        {/* Right Column: Product Details */}
         <div className="w-full md:w-1/2 lg:w-2/5 flex flex-col pt-4 md:pt-0">
-          
-          {/* Header Info */}
+
           <h1 className="text-3xl md:text-5xl font-bold uppercase tracking-tighter mb-2">
             {item.productDisplayName}
           </h1>
@@ -109,7 +102,6 @@ const handleAddToCart = () => {
 
           <div className="w-full h-px bg-black mb-8"></div>
 
-          {/* Size Selector */}
           <div className="mb-8">
             <div className="flex justify-between items-end mb-3">
               <h3 className="text-sm font-semibold uppercase tracking-widest">Select Size</h3>
@@ -132,7 +124,6 @@ const handleAddToCart = () => {
             </div>
           </div>
 
-          {/* Quantity Selector */}
           <div className="mb-8">
             <h3 className="text-sm font-semibold uppercase tracking-widest mb-3">Quantity</h3>
             <div className="flex items-center border border-black rounded-sm w-fit">
@@ -152,7 +143,6 @@ const handleAddToCart = () => {
             </div>
           </div>
 
-          {/* Add to Cart Button */}
           <button 
             onClick={handleAddToCart}
             className="w-full py-4 bg-black text-white text-sm font-bold uppercase tracking-widest rounded-sm hover:bg-neutral-800 transition-colors mb-12"
@@ -160,7 +150,6 @@ const handleAddToCart = () => {
             {selectedSize ? 'Add to Bag' : 'Select a Size'}
           </button>
 
-          {/* Product Metadata / Details Accordion-style layout */}
           <div className="border-t border-black">
             <div className="py-4 border-b border-black flex justify-between">
               <span className="text-sm font-semibold uppercase tracking-widest">Details</span>

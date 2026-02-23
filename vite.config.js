@@ -1,8 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite"; // Import the plugin
+import tailwindcss from "@tailwindcss/vite";
 
-// https://vitejs.dev
 export default defineConfig({
-  plugins: [react(), tailwindcss()], // Add the plugin to the plugins array
-});
+  plugins: [react(),tailwindcss()],
+  base: './',
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        },
+      },
+    },
+  },
+})
